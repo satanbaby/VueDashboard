@@ -1,18 +1,22 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
+    <input type="button" value="登出" class="btn btn-outline-danger" @click="loginOut">
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
-import HelloWorld from '@/components/HelloWorld.vue' // @ is an alias to /src
-
-@Component({
-  components: {
-    HelloWorld
+import Vue from 'vue'
+export default Vue.extend({
+  methods: {
+    loginOut () {
+      const api = `${process.env.VUE_APP_Path}/logout`
+      this.$http.post(api)
+        .then(response => {
+          if (response.data.success) {
+            this.$router.push('/login')
+          }
+        })
+    }
   }
 })
-export default class Home extends Vue {}
 </script>
