@@ -57,7 +57,7 @@ export default Vue.extend({
         await vm.$http.post(api, vm.user)
           .then(response => {
             if (response.data) {
-              vm.$router.push('/')
+              vm.$router.push('/admin/product')
             }
           })
           .catch(err => console.log(err))
