@@ -51,7 +51,7 @@ export default Vue.extend({
   },
   methods: {
     login () {
-      const api = `${process.env.VUE_APP_Path}/signin`
+      const api = `${process.env.VUE_APP_Path}/admin/signin`
       const vm = this
       ;(async function () {
         await vm.$http.post(api, vm.user)

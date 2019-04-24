@@ -9,6 +9,10 @@ Vue.use(Router)
 
 export default new Router({
   routes: [
+    {
+      path: '*',
+      redirect: '/login'
+    },
     // {
     //   // 一般建議用name來管理路由
     //   // 這樣不論是 path 和 component 更換
@@ -27,12 +31,12 @@ export default new Router({
       path: '/admin',
       name: 'Dashboard',
       component: Dashboard,
-      meta: { requiresAuth: true },
       children: [
         {
           path: 'product',
           name: 'Product',
-          component: Product
+          component: Product,
+          meta: { requiresAuth: true }
         }
       ]
     }
