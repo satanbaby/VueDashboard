@@ -1,5 +1,13 @@
 <template>
   <div>
+    <div class="loading"
+      v-if="loadingStatus.loading">
+      <div>
+        <div class="spinner-border text-danger loading-icon" role="status">
+        <span class="sr-only">Loading...</span>
+        </div>
+      </div>
+    </div>
     <div
       class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
       <h1 class="h2">產品管理介面</h1>
@@ -63,12 +71,18 @@
                   </div>
                   <div class="form-group">
                     <label for="customFile">或 上傳圖片
-                      <i class="fas fa-spinner fa-spin"></i>
                     </label>
                     <input type="file" id="customFile" class="form-control"
-                      ref="files">
+                      @change="uploadImg"
+                      value="">
+                      <!-- 進度條 -->
+                    <div class="progress" style="height: 3px;"
+                      v-if="loadingStatus.upload">
+                      <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                      ref="progress"></div>
+                    </div>
                   </div>
-                  <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=828346ed697837ce808cae68d3ddc3cf&auto=format&fit=crop&w=1350&q=80"
+                  <img :src="tempProduct.imageUrl"
                     class="img-fluid" alt="">
                 </div>
                 <div class="col-sm-8">
@@ -149,7 +163,11 @@
               <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">取消</button>
               <button type="button" class="btn btn-primary"
               @click="createProduct"
-              >確認</button>
+              >
+              <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"
+                v-show="loadingStatus.submit"
+              ></span>
+              確認</button>
             </div>
           </div>
         </div>
@@ -176,7 +194,11 @@
               <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">取消</button>
               <button type="button" class="btn btn-danger"
                 @click="deleteProduct(tempProduct.id)"
-                >確認刪除</button>
+                >
+                <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"
+                v-show="loadingStatus.submit"
+                ></span>
+                確認刪除</button>
             </div>
           </div>
         </div>
@@ -188,6 +210,8 @@
 import Vue from 'vue'
 import $ from 'jquery'
 import 'bootstrap'
+import { ArrayPropsDefinition } from 'vue/types/options'
+import { progress } from '@/assets/service'
 
 export default Vue.extend({
   data () {
@@ -209,15 +233,23 @@ export default Vue.extend({
         num: 0,
         imageUrl: ''
       },
-      isNews: false
+      isNews: false,
+      loadingStatus: {
+        upload: false,
+        loading: false,
+        submit: false
+      },
+      progressLoading: 0
     }
   },
   methods: {
     getProducts () {
       const api = `${process.env.VUE_APP_Path}/api/${process.env.VUE_APP_CUSTOMPATH}/products`
       const vm = this
+      vm.loadingStatus.loading = true
       this.$http.get(api).then(response => {
         if (response.data.success) {
+          vm.loadingStatus.loading = false
           this.products = response.data.products
         }
       })
@@ -248,11 +280,13 @@ export default Vue.extend({
     createProduct () {
       const vm = this
       let api = `${process.env.VUE_APP_Path}/api/${process.env.VUE_APP_CUSTOMPATH}/admin/product`
+      vm.loadingStatus.submit = true
       if (vm.isNews) {
         this.$http.post(api, { data: vm.tempProduct })
           .then(response => {
             if (response.data.success) {
               vm.getProducts()
+              vm.loadingStatus.submit = false
               $('#productModal').modal('hide')
             }
           })
@@ -262,6 +296,7 @@ export default Vue.extend({
           .then(response => {
             if (response.data.success) {
               vm.getProducts()
+              vm.loadingStatus.submit = false
               $('#productModal').modal('hide')
             }
           })
@@ -276,13 +311,50 @@ export default Vue.extend({
       const api = `${process.env.VUE_APP_Path}/api/${process.env.VUE_APP_CUSTOMPATH}/admin/product/${item}`
       console.log(api)
       const vm = this
+
+      vm.loadingStatus.submit = true
       this.$http.delete(api)
         .then(response => {
           if (response.data.success) {
             vm.getProducts()
+            vm.loadingStatus.submit = false
             $('#delProductModal').modal('hide')
           }
         })
+    },
+    uploadImg (event: any) {
+      const api = `${process.env.VUE_APP_Path}/api/${process.env.VUE_APP_CUSTOMPATH}/admin/upload`
+      const vm = this
+      console.log(event)
+      let selectImg = event.target.files[0]
+
+      vm.loadingStatus.upload = true
+
+      const formData = new FormData()
+      formData.append('file-to-upload', selectImg)
+      //                             v-config
+      this.$http.post(api, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        // import from assets service
+        onUploadProgress: function (progressEvent: any) {
+          // console.log(progress(progressEvent))
+          let progressValue = Math.floor(progress(progressEvent))
+          let el = document.getElementsByClassName('progress-bar')[0]
+          el.classList.add('bg-danger')
+          el.setAttribute('style', `width:${progressValue}%`)
+          if (progressValue === 100) {
+            el.classList.remove('bg-danger')
+          }
+        }
+      }).then((response) => {
+        console.log(response.data)
+        if (response.data.success) {
+          vm.$set(vm.tempProduct, 'imageUrl', response.data.imageUrl)
+          vm.loadingStatus.upload = false
+        }
+      })
     }
   },
   created () {
@@ -290,3 +362,40 @@ export default Vue.extend({
   }
 })
 </script>
+
+<style lang="scss" scoped>
+$iconSize: 9em;
+/* Absolute Center Spinner */
+.loading {
+  position: fixed;
+  z-index: 999;
+  height: 1em;
+  width: 1em;
+  overflow: show;
+  margin: auto;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  >div{
+    display: inline-block;
+    transform: translate(-50%, -50%);
+    .loading-icon{
+      width: $iconSize;
+      height: $iconSize;
+    }
+  };
+/* Transparent Overlay */
+  &:before{
+    content: '';
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, .5);
+  }
+}
+
+</style>
