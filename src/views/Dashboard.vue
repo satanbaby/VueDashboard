@@ -1,7 +1,7 @@
 <template>
   <div>
     <Navbar/>
-
+    <alertMessage/>
     <div class="container-fluid">
       <div class="row">
         <nav class="col-md-2 d-none d-md-block bg-light sidebar">
@@ -20,11 +20,13 @@
 import Vue from 'vue'
 import Navbar from '../components/Navbar.vue'
 import SliderBar from '../components/Slidebar.vue'
+import alertMessage from '@/components/alertMessage.vue'
 
 export default Vue.extend({
   components: {
     Navbar,
-    SliderBar
+    SliderBar,
+    alertMessage
   }
 })
 </script>

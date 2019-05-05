@@ -212,6 +212,7 @@ import $ from 'jquery'
 import 'bootstrap'
 import { ArrayPropsDefinition } from 'vue/types/options'
 import { progress } from '@/assets/service'
+import eventBus from '@/assets/bus'
 
 export default Vue.extend({
   data () {
@@ -353,6 +354,8 @@ export default Vue.extend({
         if (response.data.success) {
           vm.$set(vm.tempProduct, 'imageUrl', response.data.imageUrl)
           vm.loadingStatus.upload = false
+        } else {
+          eventBus.$emit('messsage:push', response.data.message, 'danger')
         }
       })
     }
