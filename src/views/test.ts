@@ -11,4 +11,14 @@ interface persion{
   age: number
 }
 
+let p = {
+  tempPersion: []
+}
+
+let per:persion[] = p.tempPersion
+per.push({
+  name: '1234',
+  age: 18
+})
+
 export default persion

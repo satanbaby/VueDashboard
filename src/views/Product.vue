@@ -72,11 +72,24 @@
                   <div class="form-group">
                     <label for="customFile">或 上傳圖片
                     </label>
-                    <input type="file" id="customFile" class="form-control"
-                      @change="uploadImg"
-                      value="">
+                    <!-- <div class="input-group">
+                      <input type="file" id="customFile" class="form-control"
+                        @change="uploadImg">
+                      <div class="input-group-append">
+                        <button class="btn btn-outline-white" type="button" id="button-addon2"
+                        @click="cancelUpload=true, clearInput()"
+                        >&times;</button>
+                      </div>
+                    </div> -->
+                    <div class="custom-file">
+                      <input type="file" class="custom-file-input" id="customFile"
+                        @change="uploadImg">
+                      <label class="custom-file-label" for="customFile">
+                        {{tempProduct.image}}
+                      </label>
+                    </div>
                       <!-- 進度條 -->
-                    <div class="progress" style="height: 3px;"
+                    <div class="progress mt-1" style="height: 3px;"
                       v-if="loadingStatus.upload">
                       <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
                       ref="progress"></div>
@@ -84,6 +97,9 @@
                   </div>
                   <img :src="tempProduct.imageUrl"
                     class="img-fluid" alt="">
+                  <button class="btn btn-sm btn-outline-secondary mt-3 float-right" type="button" id="button-addon2"
+                        @click="cancelUpload=true, clearInput()"
+                        >取消</button>
                 </div>
                 <div class="col-sm-8">
                   <div class="form-group">
@@ -211,8 +227,9 @@ import Vue from 'vue'
 import $ from 'jquery'
 import 'bootstrap'
 import { ArrayPropsDefinition } from 'vue/types/options'
-import { progress } from '@/assets/service'
+import { progress, hasClassElement } from '@/assets/service'
 import eventBus from '@/assets/bus'
+import Axios from 'axios'
 
 export default Vue.extend({
   data () {
@@ -240,7 +257,8 @@ export default Vue.extend({
         loading: false,
         submit: false
       },
-      progressLoading: 0
+      progressLoading: 0,
+      cancelUpload: false
     }
   },
   methods: {
@@ -328,6 +346,10 @@ export default Vue.extend({
       const vm = this
       console.log(event)
       let selectImg = event.target.files[0]
+      vm.tempProduct.image = selectImg.name
+      console.log(vm.tempProduct.image)
+      // const source = CancelToken.source()
+      const source = Axios.CancelToken.source()
 
       vm.loadingStatus.upload = true
 
@@ -342,13 +364,25 @@ export default Vue.extend({
         onUploadProgress: function (progressEvent: any) {
           // console.log(progress(progressEvent))
           let progressValue = Math.floor(progress(progressEvent))
-          let el = document.getElementsByClassName('progress-bar')[0]
+          let el = $('.progress-bar')[0]
           el.classList.add('bg-danger')
+          console.log(progressValue)
           el.setAttribute('style', `width:${progressValue}%`)
-          if (progressValue === 100) {
-            el.classList.remove('bg-danger')
+          if (vm.cancelUpload) {
+            source.cancel('取消上傳')
+            vm.cancelUpload = false
+            vm.loadingStatus.upload = false
+            vm.cancelUpload = false
+            vm.clearInput()
           }
-        }
+          if (progressValue === 100) {
+            if (hasClassElement(el, 'bg-danger')) {
+              el.classList.remove('bg-danger')
+            }
+            vm.loadingStatus.upload = false
+          }
+        },
+        cancelToken: source.token
       }).then((response) => {
         console.log(response.data)
         if (response.data.success) {
@@ -357,7 +391,25 @@ export default Vue.extend({
         } else {
           eventBus.$emit('messsage:push', response.data.message, 'danger')
         }
+        if (vm.cancelUpload) {
+          vm.clearInput()
+        }
       })
+    },
+    clearInput () {
+      const vm = this
+      let el: any = $('#customFile')
+      el.value = ''
+      vm.$set(vm.tempProduct, 'imageUrl', '')
+      vm.$set(vm.tempProduct, 'image', '')
+    }
+  },
+  watch: {
+    cancelUpload () {
+      const vm = this
+      setTimeout(() => {
+        vm.cancelUpload = false
+      }, 100)
     }
   },
   created () {
@@ -400,5 +452,4 @@ $iconSize: 9em;
     background: rgba(0, 0, 0, .5);
   }
 }
-
 </style>
