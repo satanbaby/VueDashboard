@@ -81,13 +81,17 @@
                         >&times;</button>
                       </div>
                     </div> -->
-                    <div class="custom-file">
+                    <div class="custom-file" v-if="!loadingStatus.upload">
                       <input type="file" class="custom-file-input" id="customFile"
                         @change="uploadImg">
                       <label class="custom-file-label" for="customFile">
                         {{tempProduct.image}}
                       </label>
                     </div>
+                    <button class="btn btn-sm btn-outline-secondary mt-3 float-right" type="button" id="button-addon2"
+                        @click="cancelUpload=true, clearInput()"
+                        v-if="loadingStatus.upload"
+                        >取消</button>
                       <!-- 進度條 -->
                     <div class="progress mt-1" style="height: 3px;"
                       v-if="loadingStatus.upload">
@@ -97,9 +101,6 @@
                   </div>
                   <img :src="tempProduct.imageUrl"
                     class="img-fluid" alt="">
-                  <button class="btn btn-sm btn-outline-secondary mt-3 float-right" type="button" id="button-addon2"
-                        @click="cancelUpload=true, clearInput()"
-                        >取消</button>
                 </div>
                 <div class="col-sm-8">
                   <div class="form-group">
@@ -257,7 +258,6 @@ export default Vue.extend({
         loading: false,
         submit: false
       },
-      progressLoading: 0,
       cancelUpload: false
     }
   },
